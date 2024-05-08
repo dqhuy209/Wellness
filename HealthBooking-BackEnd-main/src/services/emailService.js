@@ -1,0 +1,146 @@
+require("dotenv").config();
+// import nodemailer from "nodemailer";
+const nodemailer = require("nodemailer");
+
+//
+
+let sendSimpleEmail = async (dataSend) => {
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, //true for 465, false for other ports
+    auth: {
+      // TODO: replace `user` and `pass` values from <https://forwardemail.net>
+      user: process.env.EMAIL_APP,
+      pass: process.env.EMAIL_APP_PASSWORD,
+    },
+  });
+
+  // send mail with defined transport object
+  const info = await transporter.sendMail({
+    from: '"WellClinic" <20a10010201@students.hou.edu.vn>', // sender address
+    to: dataSend.receiverEmail, // list of receivers
+    subject: "Thông tin đặt lịch khám bệnh ✔", // Subject line
+    html: getBodyHTMLEmail(dataSend),
+  });
+};
+
+let getBodyHTMLEmail = (dataSend) => {
+  let result = "";
+  if (dataSend.language === "en") {
+    result = `
+        <h3>Dear ${dataSend.patientName}</h3>
+        <p>You receive this email when you make an appointment on WellnessClinic</p>
+        <p>Information to schedule an appointment:</p>
+        <div>
+            <b>Time: ${dataSend.time}</b>
+        </div>
+        <div>
+           <b>Doctor: ${dataSend.doctorName}</b>
+        </div>
+        <div>
+            <b>Adrress Clinic: ${dataSend.addressClinic}</b>
+        </div>
+        <div>
+            <p>Appointment code: ${dataSend.token}</p>
+        </div>
+        <p>Please click on the link below to confirm and complete your appointment.</p>
+        <div>
+            <a href=${dataSend.redirectLink} target="blank">Confirm</a>
+        </div>
+        <div>
+            Thank you very much, have a nice day!
+        </div>
+        
+    `; // html body
+  }
+  if (dataSend.language === "vi") {
+    result = `
+        <h3>Xin chào ${dataSend.patientName}</h3>
+        <p>Bạn nhận được email này khi đã đặt lịch khám trên WellnessClinic</p>
+        <p>Thông tin đặt lịch:</p>
+        <div>
+            <b>Thời gian: ${dataSend.time}</b>
+        </div>
+        <div>
+           <b>Bác sĩ: ${dataSend.doctorName}</b>
+        </div>
+        <div>
+            <b>Địa chỉ cơ sở y tế: ${dataSend.addressClinic}</b>
+        </div>
+        <div>
+            <p>Mã lịch hẹn: ${dataSend.token}</p>
+        </div>
+        <p>Vui lòng click vào đường link dưới để xác nhận và hoàn tất lịch đặt khám.</p>
+        <div>
+            <a href=${dataSend.redirectLink} target="blank">Xác nhận</a>
+        </div>
+        <div>
+            Xin chân thành cảm ơn, chúc bạn có một ngày vui vẻ!
+        </div>
+        
+    `; // html body
+  }
+
+  return result;
+};
+
+const sendAttachment = async (dataSend) => {
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, //true for 465, false for other ports
+    auth: {
+      // TODO: replace `user` and `pass` values from <https://forwardemail.net>
+      user: process.env.EMAIL_APP,
+      pass: process.env.EMAIL_APP_PASSWORD,
+    },
+  });
+
+  // send mail with defined transport object
+  const info = await transporter.sendMail({
+    from: '"WellClinic" <WellnessClinic>', // sender address
+    to: dataSend.email, // list of receivers
+    subject: "Xác nhận khám bệnh thành công ✔", // Subject line
+    html: getBodyHTMLEmailRemedy(dataSend),
+    attachments: [
+      //encoded string as an attachment
+      {
+        filename: `remedy-${dataSend.patientId}-${new Date().getTime()}.png`,
+        content: dataSend.image.split("base64,")[1],
+        encoding: "base64",
+      },
+    ],
+  });
+};
+
+let getBodyHTMLEmailRemedy = (dataSend) => {
+  let result = "";
+  if (dataSend.language === "en") {
+    result = `
+        <h3>Dear ${dataSend.patientName}</h3>
+        <p>You receive this email when you complete an appointment on Wellness</p>
+        <div>
+            Thank you very much, have a nice day!
+        </div>
+        
+    `; // html body
+  }
+  if (dataSend.language === "vi") {
+    result = `
+        <h3>Xin chào ${dataSend.patientName}</h3>
+        <p>Bạn nhận được email này khi đã khám bệnh trên Wellness Clinic</p>
+        <div>
+            Xin chân thành cảm ơn, chúc bạn có một ngày vui vẻ!
+        </div>
+        
+    `; // html body
+  }
+
+  return result;
+};
+
+module.exports = {
+  sendSimpleEmail,
+  sendAttachment,
+};
